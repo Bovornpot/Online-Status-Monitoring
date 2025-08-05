@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการข้อมูลสาขา</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 ระบบจัดการข้อมูลสาขา</h1>
+            <p>Branch Management System - Online Status Monitoring</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalBranches">0</div>
+                <div class="stat-label">สาขาทั้งหมด</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="onlineBranches">0</div>
+                <div class="stat-label">สาขา Online</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="offlineBranches">0</div>
+                <div class="stat-label">สาขา Offline</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="onlinePercentage">0%</div>
+                <div class="stat-label">เปอร์เซ็นต์ Online</div>
+            </div>
+        </div>
+
+
+        <div class="controls">
+            <div class="data-source-info" id="dataSourceInfo"></div>
+
+            <div class="control-row">
+                <div class="control-group">
+                    <label>🔍 ค้นหา</label>
+                    <input type="text" id="searchInput" placeholder="ค้นหาชื่อสาขา, รหัส, จังหวัด...">
+                </div>
+                <div class="control-group">
+                    <label>📍 กรองตามจังหวัด</label>
+                    <select id="provinceFilter">
+                        <option value="">ทุกจังหวัด</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>🌐 กรองตามสถานะ</label>
+                    <select id="statusFilter">
+                        <option value="">ทุกสถานะ</option>
+                        <option value="online">Online เท่านั้น</option>
+                        <option value="offline">Offline เท่านั้น</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button class="btn-add" id="addBranchBtn">➕ เพิ่มสาขาใหม่</button>
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <label>📊 Import ข้อมูล (.xlsx, .xls, .csv)</label>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button id="exportExcelBtn">📊 Export Excel</button>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                     <button id="exportCsvBtn">📄 Export CSV</button>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button id="clearDataBtn" class="btn-danger">🗑️ ล้างข้อมูลทั้งหมด</button>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button id="historyBtn" class="btn-secondary">📜 ประวัติการใช้งาน</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>รหัสร้าน</th>
+                        <th>ชื่อสาขา</th>
+                        <th>ภาค</th>
+                        <th>สถานะ</th>
+                        <th>All Zone</th>
+                        <th>สถานะเชื่อมOnline</th>
+                        <th>อำเภอ</th>
+                        <th>จังหวัด</th>
+                        <!-- <th>FC.</th>
+                        <th>เขต</th>
+                        <th>ฝ่าย</th>
+                        <th>GM.</th>
+                        <th>AVP</th> -->
+                        <th>Shophouse/Standalone</th>
+                        <th>รายละเอียด</th>
+                        <!-- <th>การจัดการ</th> -->
+                    </tr>
+                </thead>
+                <tbody id="branchTableBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-container" id="paginationContainer" style="display: none;">
+            <div class="pagination-info">
+                <span id="paginationInfo">แสดง 0 - 0 จาก 0 รายการ</span>
+            </div>
+            <div class="pagination-controls">
+                <div class="page-size-selector">
+                    <label>แสดงต่อหน้า:</label>
+                    <select id="pageSizeSelect">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="200">200</option>
+                        <option value="500">500</option>
+                    </select>
+                </div>
+                <button id="firstPageBtn">⏮️ หน้าแรก</button>
+                <button id="prevPageBtn">◀️ ก่อนหน้า</button>
+                <span id="currentPageInfo">หน้า 1 จาก 1</span>
+                <button id="nextPageBtn">▶️ ถัดไป</button>
+                <button id="lastPageBtn">⏭️ หน้าสุดท้าย</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="branchModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModalBtn">&times;</span>
+            <h2 id="modalTitle">เพิ่มสาขาใหม่</h2>
+            <form id="branchForm">
+                <input type="hidden" id="editingId" name="id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>รหัสร้าน *</label>
+                        <input type="text" id="storeCode" name="storeCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ชื่อสาขา *</label>
+                        <input type="text" id="branchName" name="branchName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ภาค *</label>
+                        <select id="region" name="region" required>
+                            <option value="">เลือกภาค</option>
+                            <option value="BE">BE</option>
+                            <option value="BG">BG</option>
+                            <option value="BN">BN</option>
+                            <option value="BS">BS</option>
+                            <option value="BW">BW</option>
+                            <option value="CM">CM</option>
+                            <option value="NEL">NEL</option>
+                            <option value="NEU">NEU</option>
+                            <option value="PK">PK</option>
+                            <option value="RC">RC</option>
+                            <option value="REL">REL</option>
+                            <option value="REU">REU</option>
+                            <option value="RN">RN</option>
+                            <option value="RSL">RSL</option>
+                            <option value="RSU">RSU</option>
+                            <option value="UB">UB</option>
+                            <option value="YL">YL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>สถานะ</label>
+                        <select id="status" name="status">
+                            <option value="">เลือกสถานะ</option>
+                            <option value="CO">CO</option>
+                            <option value="SBP">SBP</option>
+                            <option value="Sub-Area">Sub-Area</option>
+                            <option value="ปตท">ปตท</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>All Zone</label>
+                        <select id="allZone" name="allZone">
+                            <option value="">เลือก All Zone</option>
+                            <option value="Bangkok">Bangkok</option>
+                            <option value="Region">Region</option>
+                            <option value="Sub-Area">Sub-Area</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>สถานะเชื่อมOnline *</label>
+                        <select id="onlineStatus" name="onlineStatus" required>
+                            <option value="">เลือกสถานะ</option>
+                            <option value="สามารถเชื่อม Online">สามารถเชื่อม Online</option>
+                            <option value="ไม่สามารถเชื่อม Online">ไม่สามารถเชื่อม Online</option>
+                            <option value="ร้านไม่ติดกล้อง CCTV">ร้านไม่ติดกล้อง CCTV</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>อำเภอ *</label>
+                        <input type="text" id="district" name="district" required>
+                    </div>
+                    <div class="form-group">
+                        <label>จังหวัด *</label>
+                        <input type="text" id="province" name="province" required>
+                    </div>
+                    <div class="form-group">
+                        <label>FC.</label>
+                        <input type="text" id="fc" name="fc">
+                    </div>
+                    <div class="form-group">
+                        <label>เขต</label>
+                        <input type="text" id="zone" name="zone">
+                    </div>
+                    <div class="form-group">
+                        <label>ฝ่าย</label>
+                        <input type="text" id="department" name="department">
+                    </div>
+                    <div class="form-group">
+                        <label>GM.</label>
+                        <input type="text" id="gm" name="gm">
+                    </div>
+                    <div class="form-group">
+                        <label>AVP</label>
+                        <input type="text" id="avp" name="avp">
+                    </div>
+                    <div class="form-group">
+                        <label>Shophouse/Standalone</label>
+                        <select id="shopType" name="shopType">
+                            <option value="">เลือกประเภท</option>
+                            <option value="Shophouse">Shophouse</option>
+                            <option value="Standalone">Standalone</option>
+                            <option value="PB">PB</option>
+                            <option value="SA">SA</option>
+                            <option value="SH">SH</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit">💾 บันทึก</button>
+                    <button type="button" id="cancelModalBtn">❌ ยกเลิก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeDetailsModalBtn">&times;</span>
+            <h2 id="detailsModalTitle">รายละเอียดสาขา</h2>
+            
+            <div id="detailsModalBody">
+                <div class="details-grid">
+                    <div class="details-label">รหัสร้าน:</div><div class="details-value">Loading...</div>
+                    <div class="details-label">ชื่อสาขา:</div><div class="details-value">Loading...</div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 30px;">
+                <button id="detailsModalEditBtn" class="btn-edit">✏️ แก้ไข</button>
+                <button id="detailsModalDeleteBtn" class="btn-danger">🗑️ ลบ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exportModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" id="closeExportModalBtn">&times;</span>
+            <h2>ตั้งค่าการส่งออกไฟล์</h2>
+            <form id="exportForm">
+                <div class="form-group">
+                    <label>ชื่อไฟล์ (ไม่ต้องใส่นามสกุลไฟล์)</label>
+                    <input type="text" id="exportFileName" required>
+                    <small style="color: #666; margin-top: 5px;">เช่น branch_data_q3_2025</small>
+                </div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="submit">💾 บันทึกและดาวน์โหลด</button>
+                    <button type="button" id="cancelExportModalBtn">❌ ยกเลิก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="notificationModal" class="modal">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            
+            <div class="notification-icon" id="notificationIcon"></div>
+
+            <h2 id="notificationTitle" style="margin-top: 15px;"></h2>
+
+            <p id="notificationMessage" style="color: #666; line-height: 1.6;"></p>
+
+            <div class="form-actions" id="notificationActions" style="margin-top: 25px;">
+                </div>
+
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" id="closeHistoryModalBtn">&times;</span>
+            <h2>📜 ประวัติการใช้งาน</h2>
+            <div class="history-log-container" id="historyLogContainer">
+                <p>กำลังโหลดประวัติ...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/dexie@3/dist/dexie.min.js"></script>
+    <script src="script.js" defer></script> 
+</body>
+</html>
