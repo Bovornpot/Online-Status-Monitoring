@@ -69,6 +69,10 @@ const DOMElements = {
     closeHistoryModalBtn: document.getElementById('closeHistoryModalBtn'),
     historyLogContainer: document.getElementById('historyLogContainer'),
     historyBtn: document.getElementById('historyBtn'),
+
+    // NEW: Elements สำหรับจัดเรียงข้อมูล
+    branchTableBody: document.getElementById('branchTableBody'),
+    tableHeader: document.getElementById('tableHeader'), 
 };
 
 // State Management
@@ -79,6 +83,10 @@ let pageSize = 100;
 let currentDataSource = { name: "ยังไม่มีข้อมูล", status: "" };
 let exportType = null; // ตัวแปรสำหรับจำประเภทไฟล์ที่จะ Export ('excel' หรือ 'csv')
 let branchBeforeEdit = null; // NEW: ตัวแปรสำหรับเก็บข้อมูลสาขาก่อนที่จะถูกแก้ไข
+
+// ตัวแปรสำหรับสถานะการเรียงข้อมูล
+let sortColumn = 'storeCode'; // คอลัมน์เริ่มต้นที่ใช้เรียง
+let sortDirection = 'asc';    // ทิศทางเริ่มต้น 'asc' (น้อยไปมาก)
 
 // NEW: ฟังก์ชันเริ่มต้นการทำงานของแอปพลิเคชัน
 async function initializeApp() {
@@ -318,6 +326,16 @@ function closeHistoryModal() {
     DOMElements.historyModal.style.display = 'none';
 }
 
+// NEW: ฟังก์ชันสำหรับอัปเดต UI ของหัวตาราง (แสดงลูกศร)
+function updateSortIndicators() {
+    DOMElements.tableHeader.querySelectorAll('th.table-sortable').forEach(th => {
+        th.classList.remove('sorted-asc', 'sorted-desc');
+        if (th.dataset.column === sortColumn) {
+            th.classList.add(sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        }
+    });
+}
+
 // REFACTORED: รวมการตั้งค่า Event Listener ไว้ในฟังก์ชันเดียว
 function setupEventListeners() {
     // Filters
@@ -413,8 +431,26 @@ function setupEventListeners() {
             openDetailsModal(branchId);
         }
     });
-}
 
+    // NEW: Event Listener สำหรับการคลิกหัวตารางเพื่อเรียงข้อมูล
+    DOMElements.tableHeader.addEventListener('click', (event) => {
+        const header = event.target.closest('.table-sortable');
+        if (!header) return;
+
+        const newSortColumn = header.dataset.column;
+
+        if (sortColumn === newSortColumn) {
+            // ถ้าคลิกคอลัมน์เดิม ให้สลับทิศทาง
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            // ถ้าคลิกคอลัมน์ใหม่ ให้เริ่มเรียงจากน้อยไปมาก
+            sortColumn = newSortColumn;
+            sortDirection = 'asc';
+        }
+
+        applyFilters(); // สั่งให้กรองและเรียงข้อมูลใหม่ทั้งหมด
+    });
+}
 
 // REFACTORED: ฟังก์ชันกรองข้อมูล
 function applyFilters() {
@@ -434,6 +470,25 @@ function applyFilters() {
         return matchesSearch && matchesProvince && matchesStatus;
     });
 
+    filteredBranches.sort((a, b) => {
+        const valA = a[sortColumn] || '';
+        const valB = b[sortColumn] || '';
+
+        // [NEW] ตรวจสอบว่าเป็นตัวเลขหรือไม่
+        const isNumber = !isNaN(valA) && !isNaN(valB) && valA !== '' && valB !== '';
+        
+        let comparison = 0;
+        if (isNumber) {
+            // ถ้าเป็นตัวเลข ให้เรียงแบบตัวเลข
+            comparison = parseFloat(valA) - parseFloat(valB);
+        } else {
+            // ถ้าเป็นข้อความ ให้เรียงแบบข้อความ (เหมือนเดิม)
+            comparison = String(valA).localeCompare(String(valB), 'th');
+        }
+
+        return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
     currentPage = 1;
     refreshUI(); // REFACTORED: เรียกฟังก์ชันเดียวเพื่ออัพเดท UI ทั้งหมด
 }
@@ -444,6 +499,7 @@ function refreshUI() {
     updatePagination();
     updateStats();
     updateProvinceFilter();
+    updateSortIndicators();
 }
 
 
@@ -712,7 +768,7 @@ async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    showLoadingMessage("กำลังอ่านและประมวลผลไฟล์...");
+    showNotification({ type: 'loading', title: 'กำลังนำเข้าข้อมูล', message: 'โปรดรอสักครู่...' });
 
     try {
         const data = await parseFile(file);

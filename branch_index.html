@@ -85,23 +85,18 @@
         </div>
 
         <div class="table-container">
-            <table>
-                <thead>
+            <table id="mainTable">
+                <thead id="tableHeader">
                     <tr>
-                        <th>รหัสร้าน</th>
-                        <th>ชื่อสาขา</th>
-                        <th>ภาค</th>
-                        <th>สถานะ</th>
-                        <th>All Zone</th>
-                        <th>สถานะเชื่อมOnline</th>
-                        <th>อำเภอ</th>
-                        <th>จังหวัด</th>
-                        <!-- <th>FC.</th>
-                        <th>เขต</th>
-                        <th>ฝ่าย</th>
-                        <th>GM.</th>
-                        <th>AVP</th> -->
-                        <th>Shophouse/Standalone</th>
+                        <th class="table-sortable" data-column="storeCode" title="คลิกเพื่อเรียงข้อมูล">รหัสร้าน</th>
+                        <th class="table-sortable" data-column="branchName" title="คลิกเพื่อเรียงข้อมูล">ชื่อสาขา</th>
+                        <th class="table-sortable" data-column="region" title="คลิกเพื่อเรียงข้อมูล">ภาค</th>
+                        <th class="table-sortable" data-column="status" title="คลิกเพื่อเรียงข้อมูล">สถานะ</th>
+                        <th class="table-sortable" data-column="allZone" title="คลิกเพื่อเรียงข้อมูล">All Zone</th>
+                        <th class="table-sortable" data-column="onlineStatus" title="คลิกเพื่อเรียงข้อมูล">สถานะเชื่อมOnline</th>
+                        <th class="table-sortable" data-column="district" title="คลิกเพื่อเรียงข้อมูล">อำเภอ</th>
+                        <th class="table-sortable" data-column="province" title="คลิกเพื่อเรียงข้อมูล">จังหวัด</th>
+                        <th class="table-sortable" data-column="shopType" title="คลิกเพื่อเรียงข้อมูล">Shophouse/Standalone</th>
                         <th>รายละเอียด</th>
                         <!-- <th>การจัดการ</th> -->
                     </tr>
