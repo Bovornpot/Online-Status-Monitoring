@@ -466,7 +466,8 @@ function applyFilters() {
         const matchesProvince = !provinceFilter || branch.province === provinceFilter;
         const matchesStatus = !statusFilter ||
             (statusFilter === 'online' && branch.onlineStatus === 'สามารถเชื่อม Online') ||
-            (statusFilter === 'offline' && branch.onlineStatus !== 'สามารถเชื่อม Online');
+            (statusFilter === 'offline' && branch.onlineStatus !== 'สามารถเชื่อม Online')||
+            (statusFilter === 'cctv' && branch.onlineStatus === 'ร้านไม่ติดกล้อง CCTV');
         return matchesSearch && matchesProvince && matchesStatus;
     });
 
