@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branch Status Widget Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffddc1 0%, #f1f4f8 100%);
+            min-height: 100vh;
+            color: rgb(255, 255, 255);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b35 );
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.08);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-top: 4px solid #ff6b35;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-shadow: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Stats Cards (4 existing cards) */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid #ff6b35;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.2em;
+            font-weight: 800;
+            color: #2d3748;
+            margin-bottom: 6px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .stat-card.success { border-left-color: #22c55e; }
+        .stat-card.success .stat-number { color: #22c55e; }
+
+        .stat-card.warning { border-left-color: #ff6b35; }
+        .stat-card.warning .stat-number { color: #ff6b35; }
+
+        .stat-card.danger { border-left-color: #dc2626; }
+        .stat-card.danger .stat-number { color: #dc2626; }
+
+        .stat-card.info { border-left-color: #0ea5e9; }
+        .stat-card.info .stat-number { color: #0ea5e9; }
+
+        /* New Chart Widget */
+        .chart-widget {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #8b5cf6;
+            position: relative;
+            overflow: hidden;
+            height: 450px;
+        }
+
+        .chart-widget::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .chart-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-title::before {
+            content: '📊';
+            font-size: 1.2em;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-dot.online { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+        .legend-dot.offline { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            width: 65%;
+            float: left;
+        }
+
+        .chart-summary {
+            width: 32%;
+            float: right;
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 0;
+        }
+
+        .chart-content {
+            display: flex;
+            gap: 20px;
+            height: 350px;
+        }
+
+        .chart-content::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-left: 3px solid;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: calc(25% - 3px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-left-width: 4px;
+        }
+
+        .summary-card.co { border-left-color: #3b82f6; }
+        .summary-card.sbp { border-left-color: #10b981; }
+        .summary-card.sub-area { border-left-color: #f59e0b; }
+        .summary-card.ptt { border-left-color: #ef4444; }
+
+        .summary-header {
+            margin-bottom: 8px;
+        }
+
+        .summary-type {
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 12px;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+
+        .summary-total {
+            font-size: 18px;
+            font-weight: 800;
+            color: #374151;
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+        }
+
+        .summary-detail {
+            text-align: center;
+            flex: 1;
+        }
+
+        .summary-detail .number {
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1px;
+        }
+
+        .summary-detail .label {
+            font-size: 8px;
+            font-weight: 500;
+            color: #6b7280;
+            line-height: 1;
+        }
+
+        .online .number { color: #16a34a; }
+        .offline .number { color: #dc2626; }
+        .rate .number { color: #3b82f6; }
+
+        /* Status indicators */
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        .summary-card.co::before { background: #3b82f6; }
+        .summary-card.sbp::before { background: #10b981; }
+        .summary-card.sub-area::before { background: #f59e0b; }
+        .summary-card.ptt::before { background: #ef4444; }
+
+        @media (max-width: 768px) {
+            .chart-header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .chart-widget {
+                height: auto;
+            }
+
+            .chart-content {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .chart-container {
+                width: 100%;
+                float: none;
+                height: 300px;
+            }
+
+            .chart-summary {
+                width: 100%;
+                float: none;
+                height: auto;
+                margin-top: 20px;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+            }
+
+            .summary-card {
+                text-align: center;
+                height: auto;
+                min-height: 120px;
+                padding: 16px;
+            }
+
+            .summary-type {
+                font-size: 13px;
+            }
+
+            .summary-total {
+                font-size: 20px;
+            }
+
+            .summary-detail .number {
+                font-size: 13px;
+            }
+
+            .summary-detail .label {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 ระบบจัดการข้อมูลสาขา</h1>
+            <p>Branch Management System - Online Status Monitoring</p>
+        </div>
+
+        <!-- Existing 4 stats cards -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">486</div>
+                <div class="stat-label">สาขาทั้งหมด</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-number">342</div>
+                <div class="stat-label">สาขา Online</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-number">144</div>
+                <div class="stat-label">สาขา Offline</div>
+            </div>
+            <div class="stat-card info">
+                <div class="stat-number">70.4%</div>
+                <div class="stat-label">เปอร์เซ็นต์ Online</div>
+            </div>
+        </div>
+
+        <!-- New Chart Widget -->
+        <div class="chart-widget">
+            <div class="chart-header">
+                <h3 class="chart-title">สถานะการเชื่อมต่อตามประเภทสาขา</h3>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot online"></div>
+                        <span>Online</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot offline"></div>
+                        <span>Offline</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-content">
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+
+                <div class="chart-summary">
+                    <div class="summary-card co">
+                        <div class="summary-header">
+                            <div class="summary-type">CO (Company Owned)</div>
+                            <div class="summary-total">158</div>
+                        </div>
+                        <div class="summary-stats">
+                            <div class="summary-detail online">
+                                <div class="number">112</div>
+                                <div class="label">เชื่อมต่อได้</div>
+                            </div>
+                            <div class="summary-detail offline">
+                                <div class="number">46</div>
+                                <div class="label">เชื่อมต่อไม่ได้</div>
+                            </div>
+                            <div class="summary-detail rate">
+                                <div class="number">70.9%</div>
+                                <div class="label">อัตราเชื่อมต่อ</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-card sbp">
+                        <div class="summary-header">
+                            <div class="summary-type">SBP (Sub Business Partner)</div>
+                            <div class="summary-total">142</div>
+                        </div>
+                        <div class="summary-stats">
+                            <div class="summary-detail online">
+                                <div class="number">98</div>
+                                <div class="label">เชื่อมต่อได้</div>
+                            </div>
+                            <div class="summary-detail offline">
+                                <div class="number">44</div>
+                                <div class="label">เชื่อมต่อไม่ได้</div>
+                            </div>
+                            <div class="summary-detail rate">
+                                <div class="number">69.0%</div>
+                                <div class="label">อัตราเชื่อมต่อ</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-card sub-area">
+                        <div class="summary-header">
+                            <div class="summary-type">Sub-Area (พื้นที่ย่อย)</div>
+                            <div class="summary-total">124</div>
+                        </div>
+                        <div class="summary-stats">
+                            <div class="summary-detail online">
+                                <div class="number">89</div>
+                                <div class="label">เชื่อมต่อได้</div>
+                            </div>
+                            <div class="summary-detail offline">
+                                <div class="number">35</div>
+                                <div class="label">เชื่อมต่อไม่ได้</div>
+                            </div>
+                            <div class="summary-detail rate">
+                                <div class="number">71.8%</div>
+                                <div class="label">อัตราเชื่อมต่อ</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-card ptt">
+                        <div class="summary-header">
+                            <div class="summary-type">ปตท (PTT Station)</div>
+                            <div class="summary-total">62</div>
+                        </div>
+                        <div class="summary-stats">
+                            <div class="summary-detail online">
+                                <div class="number">43</div>
+                                <div class="label">เชื่อมต่อได้</div>
+                            </div>
+                            <div class="summary-detail offline">
+                                <div class="number">19</div>
+                                <div class="label">เชื่อมต่อไม่ได้</div>
+                            </div>
+                            <div class="summary-detail rate">
+                                <div class="number">69.4%</div>
+                                <div class="label">อัตราเชื่อมต่อ</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - ในการใช้งานจริงจะดึงจากฐานข้อมูล
+        const chartData = {
+            labels: ['CO', 'SBP', 'Sub-Area', 'ปตท'],
+            datasets: [
+                {
+                    label: 'Online',
+                    data: [112, 98, 89, 43],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(34, 197, 94, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(22, 163, 74, 1)',
+                        'rgba(22, 163, 74, 1)',
+                        'rgba(22, 163, 74, 1)',
+                        'rgba(22, 163, 74, 1)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                },
+                {
+                    label: 'Offline',
+                    data: [46, 44, 35, 19],
+                    backgroundColor: [
+                        'rgba(220, 38, 38, 0.8)',
+                        'rgba(220, 38, 38, 0.8)',
+                        'rgba(220, 38, 38, 0.8)',
+                        'rgba(220, 38, 38, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(185, 28, 28, 1)',
+                        'rgba(185, 28, 28, 1)',
+                        'rgba(185, 28, 28, 1)',
+                        'rgba(185, 28, 28, 1)'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }
+            ]
+        };
+
+        const config = {
+            type: 'bar',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'เปรียบเทียบสถานะการเชื่อมต่อระบบ CCTV แยกตามประเภทสาขา',
+                        color: '#374151',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 20
+                        }
+                    },
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: '#ff6b35',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            title: function(context) {
+                                const branchTypes = {
+                                    'CO': 'Company Owned (สาขาของบริษัท)',
+                                    'SBP': 'Sub Business Partner (พันธมิตรทางธุรกิจ)',
+                                    'Sub-Area': 'พื้นที่ย่อย',
+                                    'ปตท': 'PTT Station (สถานีน้ำมัน ปตท.)'
+                                };
+                                return branchTypes[context[0].label] || context[0].label;
+                            },
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y} สาขา`;
+                            },
+                            afterLabel: function(context) {
+                                const total = context.chart.data.datasets.reduce((sum, dataset) => {
+                                    return sum + dataset.data[context.dataIndex];
+                                }, 0);
+                                const percentage = ((context.parsed.y / total) * 100).toFixed(1);
+                                return `คิดเป็น ${percentage}% ของสาขาประเภทนี้`;
+                            },
+                            footer: function(context) {
+                                if (context.length > 0) {
+                                    const dataIndex = context[0].dataIndex;
+                                    const onlineData = context[0].chart.data.datasets[0].data[dataIndex];
+                                    const offlineData = context[0].chart.data.datasets[1].data[dataIndex];
+                                    const total = onlineData + offlineData;
+                                    const rate = ((onlineData / total) * 100).toFixed(1);
+                                    return `\nอัตราเชื่อมต่อ: ${rate}% (${onlineData}/${total} สาขา)`;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: false,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#4b5563',
+                            font: {
+                                weight: 'bold',
+                                size: 13
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'ประเภทสาขา',
+                            color: '#6b7280',
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    y: {
+                        stacked: false,
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: {
+                                size: 12
+                            },
+                            callback: function(value) {
+                                return value + ' สาขา';
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'จำนวนสาขา',
+                            color: '#6b7280',
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    bar: {
+                        maxBarThickness: 60
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutCubic'
+                }
+            }
+        };
+
+        // สร้าง Chart
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(ctx, config);
+
+        // Animation เมื่อ hover summary cards
+        document.querySelectorAll('.summary-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px) scale(1.02)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-2px) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
