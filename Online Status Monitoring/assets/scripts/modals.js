@@ -2,6 +2,13 @@
 
 // ฟังก์ชันสำหรับเปิดและแสดงข้อมูลใน Details Modal
 async function openDetailsModal(id) {
+    // กันเคส data-id="" หรือ undefined
+    if (id === undefined || id === null || id === '' || Number.isNaN(Number(id))) {
+        await showNotification({ type: 'error', title: 'ผิดพลาด', message: 'ID ไม่ถูกต้อง' });
+        return;
+    }
+    id = Number(id);
+
     const branch = await db.branches.get(id);
     if (!branch) {
         await showNotification({ type: 'error', title: 'ผิดพลาด', message: 'ไม่พบข้อมูลสาขา' });
@@ -206,61 +213,76 @@ function closeModal() {
 
 // REFACTORED: บันทึกข้อมูล (เพิ่ม/แก้ไข)
 async function saveBranch(event) {
-    event.preventDefault();
-    const formData = new FormData(DOMElements.branchForm);
-    const branchData = Object.fromEntries(formData.entries());
-    const editingId = parseInt(DOMElements.editingId.value);
+  event.preventDefault();
 
-    const existing = await db.branches.where('storeCode').equals(branchData.storeCode).first();
-    if (existing && existing.id !== editingId) {
-        await showNotification({ type: 'error', title: 'ข้อมูลซ้ำซ้อน', message: 'รหัสร้านนี้มีอยู่แล้ว' });
-        return;
-    }
-    try {
-        if (editingId && branchBeforeEdit) { // ตรวจสอบว่าเป็นการแก้ไขและมีข้อมูลเก่าให้เทียบ
-            delete branchData.id;
-            
-            // [NEW] ส่วนเปรียบเทียบข้อมูลเพื่อสร้าง Log
-            const fieldLabels = {
-                storeCode: 'รหัสร้าน', branchName: 'ชื่อสาขา', region: 'ภาค', status: 'สถานะ',
-                onlineStatus: 'สถานะเชื่อมOnline', recorder: 'เครื่องบันทึกภาพ', brand: 'ยี่ห้อ',
-                district: 'อำเภอ', province: 'จังหวัด', phone: 'เบอร์โทรร้าน', fc: 'FC.',
-                phone_fc: 'เบอร์โทร Hybrid FC', zone: 'เขต', phone_zone: 'เบอร์โทร Hybrid เขต',
-                department: 'ฝ่าย', phone_dept: 'เบอร์โทร Hybrid ฝ่าย', gm: 'GM.',
-                phone_gm: 'เบอร์โทร Hybrid GM', avp: 'AVP', phone_avp: 'เบอร์โทร Hybrid AVP'
-            };
-            const changes = [];
-            for (const key in branchData) {
-                // เปรียบเทียบค่าเก่ากับค่าใหม่
-                if (branchData[key] !== branchBeforeEdit[key]) {
-                    const label = fieldLabels[key] || key;
-                    changes.push(`- ${label}: เปลี่ยนจาก "${branchBeforeEdit[key] || '(ว่าง)'}" เป็น "${branchData[key] || '(ว่าง)'}"`);
-                }
-            }
+  const formData = new FormData(DOMElements.branchForm);
+  const branchData = Object.fromEntries(formData.entries());
 
-            await db.branches.update(editingId, branchData);
-            await showNotification({ type: 'success', title: 'สำเร็จ', message: 'แก้ไขข้อมูลสาขาเรียบร้อยแล้ว' });
+  // ค่าจาก hidden สำหรับโหมดแก้ไขเท่านั้น (อย่าใช้ field ชื่อ "id" ในฟอร์ม)
+  const editingIdRaw = DOMElements.editingId.value;
+  const editingId = editingIdRaw ? Number(editingIdRaw) : NaN;
 
-            if (changes.length > 0) {
-                const logDetails = `แก้ไขข้อมูลสาขา: ${branchData.storeCode} - ${branchData.branchName}\n${changes.join('\n')}`;
-                await logActivity('EDIT', logDetails);
-            }
+  // กันข้อมูลซ้ำตาม storeCode
+  const existing = await db.branches.where('storeCode').equals(branchData.storeCode).first();
+  if (existing && existing.id !== editingId) {
+    await showNotification({ type: 'error', title: 'ข้อมูลซ้ำซ้อน', message: 'รหัสร้านนี้มีอยู่แล้ว' });
+    return;
+  }
 
-        } else { // กรณีเป็นการเพิ่มข้อมูลใหม่
-            await db.branches.add(branchData);
-            await showNotification({ type: 'success', title: 'สำเร็จ', message: 'เพิ่มข้อมูลสาขาเรียบร้อยแล้ว' });
-            await logActivity('ADD', `เพิ่มสาขาใหม่: ${branchData.storeCode} - ${branchData.branchName}`);
+  try {
+    if (!Number.isNaN(editingId) && editingId > 0 && branchBeforeEdit) {
+      // UPDATE
+      delete branchData.id; // กันไม่ให้เปลี่ยน primary key โดยไม่ตั้งใจ
+      await db.branches.update(editingId, branchData);
+
+      // (ทำ diff+log เหมือนเดิม)
+      const fieldLabels = {
+        storeCode: 'รหัสร้าน', branchName: 'ชื่อสาขา', region: 'ภาค', status: 'สถานะ',
+        onlineStatus: 'สถานะเชื่อมOnline', recorder: 'เครื่องบันทึกภาพ', brand: 'ยี่ห้อ',
+        district: 'อำเภอ', province: 'จังหวัด', phone: 'เบอร์โทรร้าน', fc: 'FC.',
+        phone_fc: 'เบอร์โทร Hybrid FC', zone: 'เขต', phone_zone: 'เบอร์โทร Hybrid เขต',
+        department: 'ฝ่าย', phone_dept: 'เบอร์โทร Hybrid ฝ่าย', gm: 'GM.',
+        phone_gm: 'เบอร์โทร Hybrid GM', avp: 'AVP', phone_avp: 'เบอร์โทร Hybrid AVP'
+      };
+      const changes = [];
+      for (const k in branchData) {
+        if (branchData[k] !== branchBeforeEdit[k]) {
+          const label = fieldLabels[k] || k;
+          changes.push(`- ${label}: เปลี่ยนจาก "${branchBeforeEdit[k] || '(ว่าง)'}" เป็น "${branchData[k] || '(ว่าง)'}"`);
         }
-        
-        closeModal();
-        branchBeforeEdit = null; // ล้างข้อมูลเก่าที่จำไว้
-        await updateDataSource(currentDataSource.name, 'modified');
-        await loadDataFromDB();
-    } catch (error) {
-        console.error("Failed to save branch:", error);
-        await showNotification({ type: 'error', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถบันทึกข้อมูลได้' });
+      }
+      await showNotification({ type: 'success', title: 'สำเร็จ', message: 'แก้ไขข้อมูลสาขาเรียบร้อยแล้ว' });
+      if (changes.length > 0) {
+        const logDetails = `แก้ไขข้อมูลสาขา: ${branchData.storeCode} - ${branchData.branchName}\n${changes.join('\n')}`;
+        await logActivity('EDIT', logDetails);
+      }
+
+    } else {
+      // ADD
+      delete branchData.id; // สำคัญ: ห้ามมี id ตอน add เพื่อให้ ++id ทำงาน
+      const newId = await db.branches.add(branchData);
+      // ใช้ DB เป็น single source of truth — ดึงกลับมา ไม่ push object ฟอร์ม
+      // (กันกรณี id เพี้ยน/ race condition)
+      // const newBranch = await db.branches.get(newId);
+      // allBranches.push(newBranch); // ไม่จำเป็นแล้วถ้าเรา reload ด้านล่าง
+      await showNotification({ type: 'success', title: 'สำเร็จ', message: 'เพิ่มข้อมูลสาขาเรียบร้อยแล้ว' });
+      await logActivity('ADD', `เพิ่มสาขาใหม่: ${branchData.storeCode} - ${branchData.branchName}`);
     }
+
+    closeModal();
+    branchBeforeEdit = null;
+    await updateDataSource(currentDataSource.name, 'modified');
+
+    // ✅ รีโหลดจาก DB ทุกครั้งหลังบันทึก เพื่อให้ allBranches มี id ที่แท้จริง
+    await loadDataFromDB();
+    applyFilters();
+
+  } catch (error) {
+    console.error("Failed to save branch:", error);
+    await showNotification({ type: 'error', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถบันทึกข้อมูลได้' });
+  }
 }
+
 
 // ฟังก์ชันยืนยันการลบ modal
 async function confirmDeleteBranch(id) {

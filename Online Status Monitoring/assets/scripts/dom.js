@@ -15,6 +15,7 @@ const DOMElements = {
     fileInput: document.getElementById('fileInput'),
     exportExcelBtn: document.getElementById('exportExcelBtn'),
     exportCsvBtn: document.getElementById('exportCsvBtn'),
+    exportPdfBtn: document.getElementById('exportPdfBtn'),
     clearDataBtn: document.getElementById('clearDataBtn'),
     // Filter
     searchInput: document.getElementById('searchInput'),

@@ -12,6 +12,7 @@ Project Structure
 │   │	├── layout.css          // header, controls, grid
 │   │	├── components.css      // stat-card, table, pagination
 │   │	├── modal.css           // modal, form
+│   │	├── chart.css           // สำหรับ chart
 │   │	└── style.css           // import ไฟล์ย่อยทั้งหมด
 │   │
 │   └── /scripts/

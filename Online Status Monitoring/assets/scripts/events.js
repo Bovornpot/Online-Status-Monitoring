@@ -14,6 +14,7 @@ function setupEventListeners() {
     DOMElements.addBranchBtn.addEventListener('click', openAddModal);
     DOMElements.exportExcelBtn.addEventListener('click', () => openExportModal('excel'));
     DOMElements.exportCsvBtn.addEventListener('click', () => openExportModal('csv'));
+    DOMElements.exportPdfBtn.addEventListener('click', () => openExportModal('pdf'));
     DOMElements.clearDataBtn.addEventListener('click', confirmClearAllData);
     DOMElements.historyBtn.addEventListener('click', openHistoryModal);
     DOMElements.closeHistoryModalBtn.addEventListener('click', closeHistoryModal);
@@ -92,11 +93,14 @@ function setupEventListeners() {
     // Event Delegation สำหรับปุ่ม "จัดการ" ในตาราง
     // วิธีนี้ทำให้เราไม่ต้องผูก Event ให้ทุกปุ่ม แต่ดักฟังที่ตัวแม่ (tbody) ทีเดียว
     DOMElements.branchTableBody.addEventListener('click', (event) => {
-        const manageButton = event.target.closest('.btn-manage');
-        if (manageButton) {
-            const branchId = parseInt(manageButton.dataset.id);
-            openDetailsModal(branchId);
+        const btn = event.target.closest('.btn-manage');
+        if (!btn) return;
+        const idAttr = btn.dataset.id;
+        if (!idAttr) {
+            showNotification({ type: 'error', title: 'ผิดพลาด', message: 'ID ไม่ถูกต้อง' });
+            return;
         }
+        openDetailsModal(Number(idAttr));
     });
 
     // Event Listener สำหรับการคลิกหัวตารางเพื่อเรียงข้อมูล
