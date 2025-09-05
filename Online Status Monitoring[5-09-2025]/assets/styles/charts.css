@@ -1,0 +1,397 @@
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #ffddc1 0%, #f1f4f8 100%);
+        min-height: 100vh;
+        color: rgb(255, 255, 255);
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .header {
+        background: linear-gradient(135deg, #ff6b35 );
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.08);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        border-top: 4px solid #ff6b35;
+    }
+
+    .header h1 {
+        font-size: 2em;
+        color: #ffffff;
+        margin-bottom: 8px;
+        font-weight: 700;
+        text-shadow: none;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Stats Cards (4 existing cards) */
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid #ff6b35;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-number {
+        font-size: 2.2em;
+        font-weight: 800;
+        color: #2d3748;
+        margin-bottom: 6px;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: #718096;
+        font-size: 0.9em;
+        font-weight: 600;
+    }
+
+    .stat-card.success { border-left-color: #22c55e; }
+    .stat-card.success .stat-number { color: #22c55e; }
+
+    .stat-card.warning { border-left-color: #ff6b35; }
+    .stat-card.warning .stat-number { color: #ff6b35; }
+
+    .stat-card.danger { border-left-color: #dc2626; }
+    .stat-card.danger .stat-number { color: #dc2626; }
+
+    .stat-card.info { border-left-color: #0ea5e9; }
+    .stat-card.info .stat-number { color: #0ea5e9; }
+
+    /* New Chart Widget */
+    .chart-widget {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border-top: 4px solid #ff6b35;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chart-widget::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .chart-title {
+        font-size: 1.4em;
+        font-weight: 700;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chart-title::before {
+        content: '📊';
+        font-size: 1.2em;
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6b7280
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .legend-dot.online { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+    .legend-dot.offline { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+
+    .chart-container {
+        position: relative;
+        flex: 2;
+        background: linear-gradient(135deg, #fefefe 0%, #f8fafc 100%);
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .chart-summary {
+        /* width: 32%;
+        float: right;
+        height: 350px;
+        overflow-y: auto; */
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .chart-content {
+        display: flex; /* เปลี่ยนจาก block เป็น flex */
+        gap: 20px;
+        flex: 1; /* เพิ่ม: ให้กินพื้นที่ที่เหลือใน .chart-widget */
+    }
+
+    /* .chart-content::after {
+        content: "";
+        display: table;
+        clear: both;
+    } */
+
+    .summary-card {
+        background: white;
+        border-radius: 12px;
+        padding: 10px; /* ลด Padding ให้เล็กลง */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--card-color);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        opacity: 0.1;
+        transition: all 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .summary-card.co { border-left-color: #3b82f6; }
+    .summary-card.sbp { border-left-color: #10b981; }
+    .summary-card.sub-area { border-left-color: #f59e0b; }
+    .summary-card.ptt { border-left-color: #ef4444; }
+
+    .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .summary-type {
+        font-size: 1em;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px
+    }
+
+    .summary-total {
+        font-size: 15px;
+        font-weight: 700;
+        color: #6b7280;
+    }
+
+    .summary-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 8px;
+        font-size: 11px;
+    }
+
+    .summary-detail {
+        text-align: center;
+        flex: 1;
+    }
+
+    .summary-detail .number {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 1px;
+    }
+
+    .summary-detail .label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    .online .number { color: #16a34a; }
+    .offline .number { color: #dc2626; }
+    .rate .number { color: #3b82f6; }
+
+    @media (max-width: 768px) {
+        .chart-header {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chart-widget {
+            height: auto; /* ให้ความสูงปรับตามเนื้อหา */
+            min-height: auto; /* ลบ min-height บนมือถือ */
+        }
+
+        .chart-content {
+            flex-direction: column; /* เปลี่ยนเป็นเรียงแนวตั้งบนมือถือ */
+            height: auto;
+        }
+
+        .chart-container {
+            width: 100%;
+            /* ลบ: float: none; */
+            height: 300px; /* อาจจะยังคงความสูงสำหรับกราฟบนมือถือ */
+            flex: none; /* ลบ flex บนมือถือ */
+        }
+
+        .chart-summary {
+            width: 100%;
+            /* ลบ: float: none; */
+            height: auto;
+            margin-top: 20px;
+            display: grid; /* ใช้ Grid เพื่อจัดเรียง Summary Cards บนมือถือ */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* ปรับ minmax */
+            gap: 16px;
+            flex: none; /* ลบ flex บนมือถือ */
+        }
+
+        .summary-card {
+            text-align: center;
+            min-height: auto;
+            max-height: none;
+        }
+    }
+
+    /* เพิ่มและปรับปรุง CSS สำหรับ Summary Card */
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--card-color);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.summary-type {
+    font-size: 1em;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+.summary-data {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.data-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+}
+
+.data-item .label {
+    font-size: 0.65em; /* ลดขนาดตัวอักษร */
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 2px; /* ลด Margin ให้กระชับขึ้น */
+    white-space: nowrap;
+}
+
+.data-item .value {
+    font-size: 1em; /* ลดขนาดตัวอักษร */
+    font-weight: 700;
+    color: #272727;
+}
+
+/* เพิ่มสีสำหรับตัวเลขและข้อความ */
+.data-item .label.online, .data-item .value.online {
+    color: #16a34a; /* สีเขียว */
+}
+
+.data-item .label.offline, .data-item .value.offline {
+    color: #dc2626; /* สีแดง */
+}
+
+.data-item .label.rate, .data-item .value.rate {
+    color: #2563eb; /* สีน้ำเงิน */
+}
+
+/* ปรับ Media Query สำหรับหน้าจอขนาดเล็ก */
+@media (max-width: 768px) {
+    .summary-data {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .data-item {
+        flex: 1 1 45%; /* ให้ item ขยายเพื่อไม่ให้แสดงผลเป็นแถวเดียว */
+    }
+}
