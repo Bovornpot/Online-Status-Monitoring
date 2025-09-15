@@ -6,7 +6,7 @@ let filteredBranches = []; // ข้อมูลที่ผ่านการ�
 let currentPage = 1;
 let pageSize = 100;
 let currentDataSource = { name: "ยังไม่มีข้อมูล", status: "" };
-let exportType = null; // ตัวแปรสำหรับจำประเภทไฟล์ที่จะ Export ('excel' หรือ 'csv')
+let exportType = null; // ตัวแปรสำหรับจำประเภทไฟล์ที่จะ Export 
 let branchBeforeEdit = null; // ตัวแปรสำหรับเก็บข้อมูลสาขาก่อนที่จะถูกแก้ไข
 
 // ตัวแปรสำหรับสถานะการเรียงข้อมูล
@@ -170,7 +170,7 @@ function sortAndSliceCounts(mapObj, sortMode='online_desc', topN=null) {
 }
 
 
-// --- อัปเดตกราฟทั้งหมด (status vertical + region/province top10 horizontal) ---
+// --- อัปเดตกราฟทั้งหมด (status vertical + region/province top5 horizontal) ---
 function updateCharts() {
     const source = (filteredBranches && filteredBranches.length) ? filteredBranches : allBranches;
 
@@ -328,14 +328,14 @@ function updateFullChart(chartType, sortDirection, dataMap) {
     try { const old = Chart.getChart(canvas); if (old) old.destroy(); } catch(e){}
     
     // ตั้งค่าความสูงของ Canvas ตามจำนวนข้อมูลและประเภท chart
-    let chartHeight;
-    if (chartType === 'province') {
-        const barHeight = 20;
-        chartHeight = sortedData.length * barHeight;
-    } else {
-        // const barHeight = 15;
-        // chartHeight = Math.max(250, sortedData.length * barHeight);
-    }
+        let chartHeight;
+        if (chartType === 'province') {
+            const barHeight = 20;
+            chartHeight = sortedData.length * barHeight;
+        } else {
+            // const barHeight = 15;
+            // chartHeight = Math.max(250, sortedData.length * barHeight);
+        }
     
     // กำหนดขนาดให้ canvas ก่อนวาด chart
     canvas.style.height = `${chartHeight}px`;
@@ -488,7 +488,7 @@ window.addEventListener('DOMContentLoaded', () => {
     try { setupChart(); } catch(e) { console.warn('setupChart init error', e); }
     initializeApp();
 
-    // --- เพิ่ม listener สำหรับ dropdown ใน modal (เมื่อ user เปลี่ยนการ sort ให้ re-render) ---
+    // --- listener สำหรับ dropdown ใน modal (เมื่อ user เปลี่ยนการ sort ให้ re-render) ---
     if (DOMElements.fullChartSortSelect) {
         DOMElements.fullChartSortSelect.addEventListener('change', () => {
             const chartType = DOMElements.fullChartModal.dataset.chartType || 'region';

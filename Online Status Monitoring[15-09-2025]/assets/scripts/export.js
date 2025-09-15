@@ -257,7 +257,7 @@ function _buildPage2({ chartDataUrl, branchTypeSummary }) {
     chartSummaryDiv.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
     chartSummaryDiv.style.gap = '20px';
     chartSummaryDiv.innerHTML = `
-        <h3 style="color: #495057; border-bottom: 2px solid #dee2e6; padding-bottom: 10px; grid-column: 1 / -1;">📊 สรุปข้อมูลตามประเภทสาขา</h3>
+        <h3 style="color: #495057; border-bottom: 2px solid #dee2e6; padding-bottom: 10px; grid-column: 1 / -1;">📊 สรุปข้อมูลตามสถานะสาขา</h3>
         
         <div class="summary-card" style="background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); border-left: 4px solid #3b82f6; display: flex; flex-direction: column; justify-content: space-between;">
             <div class="summary-type" style="font-size: 1em; font-weight: 700; color: #374151; margin-bottom: 12px;">

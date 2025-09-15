@@ -288,6 +288,7 @@ async function saveBranch(event) {
     // ✅ รีโหลดจาก DB ทุกครั้งหลังบันทึก เพื่อให้ allBranches มี id ที่แท้จริง
     await loadDataFromDB();
     applyFilters();
+    refreshUI();
 
   } catch (error) {
     console.error("Failed to save branch:", error);
@@ -307,6 +308,7 @@ async function confirmDeleteBranch(id) {
         });
         if (confirmed) {
             deleteBranch(id, branch); // ส่งข้อมูล branch ไปด้วยเพื่อใช้ log
+            refreshUI();
         }
     }
 }
@@ -319,6 +321,7 @@ async function deleteBranch(id, branchInfo) { // รับ branchInfo เพิ�
         await logActivity('DELETE', `ลบสาขา: ${branchInfo.storeCode} - ${branchInfo.branchName}`);
         await updateDataSource(currentDataSource.name, 'modified');
         await loadDataFromDB();
+        refreshUI();
     } catch (error) {
         console.error("Failed to delete branch:", error);
         await showNotification({ type: 'error', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถลบข้อมูลได้' });
@@ -334,6 +337,7 @@ async function confirmClearAllData() {
     });
     if (confirmed) {
         clearAllData();
+        refreshUI();
     }
 }
 
@@ -346,6 +350,7 @@ async function clearAllData() {
         await updateDataSource('ยังไม่มีข้อมูล', '');
         allBranches = [];
         applyFilters();
+        refreshUI();
     } catch (error) {
         console.error("Failed to clear data:", error);
         await showNotification({ type: 'error', title: 'เกิดข้อผิดพลาด', message: 'ไม่สามารถล้างข้อมูลได้' });
@@ -379,6 +384,7 @@ async function handleFileUpload(event) {
         await showNotification({ type: 'success', title: 'นำเข้าสำเร็จ', message: `นำเข้าข้อมูลใหม่: ${newBranches.length} รายการ\nข้ามแถวข้อมูลที่ไม่สมบูรณ์/ว่าง: ${skippedCount} รายการ` });
         await loadDataFromDB();
         updateCharts(); 
+        refreshUI();
 
     } catch (error) {
         console.error('Error handling file upload:', error);

@@ -71,22 +71,7 @@ function refreshUI() {
     updateBranchStatusFilter();
     updateRecorderFilter();
     updateSortIndicators();
-
-    // // อัพเดท Summary (DOM) สำหรับแต่ละมุมมอง
-    // updateStatusChartAndSummary();
-    // updateRegionChartAndSummary();
-    // updateProvinceChartAndSummary();
-
-    // // เรียกให้ app.js อัปเดต Chart instances (app.js: updateCharts)
-    // if (typeof updateCharts === 'function') {
-    //     try {
-    //         updateCharts();
-    //     } catch (err) {
-    //         console.warn('updateCharts() failed:', err);
-    //     }
-    // } else {
-    //     console.warn('updateCharts is not defined yet.');
-    // }
+    updateCharts();
 
     const activeTab = document.querySelector('.tab-link.active');
     if (activeTab) {
@@ -277,99 +262,6 @@ function updateStatusChartAndSummary() {
     });
     DOMElements.statusSummaryContainer.innerHTML = summaryHtml;
 }
-
-
-// // ฟังก์ชันสำหรับอัปเดตกราฟภาคและ Summary Cards (summary เท่านั้น)
-// function updateRegionChartAndSummary() {
-//     const source = (filteredBranches && filteredBranches.length) ? filteredBranches : allBranches;
-//     if (!DOMElements.regionSummaryContainer) return;
-
-//     const regionData = {};
-//     source.forEach(branch => {
-//         const region = branch.region || 'ไม่ระบุ';
-//         if (!regionData[region]) regionData[region] = { total: 0, online: 0, offline: 0 };
-//         regionData[region].total++;
-//         if (branch.onlineStatus === 'สามารถเชื่อม Online') regionData[region].online++;
-//         else regionData[region].offline++;
-//     });
-
-//     let summaryHtml = '';
-//     const sortedRegions = Object.keys(regionData).sort();
-//     sortedRegions.forEach(region => {
-//         const data = regionData[region];
-//         const rate = data.total > 0 ? ((data.online / data.total) * 100).toFixed(1) : 0;
-//         summaryHtml += `
-//             <div class="summary-card">
-//                 <div class="summary-type"><span class="badge">📍</span> ${region}</div>
-//                 <div class="summary-data">
-//                     <div class="data-item">
-//                         <div class="value">${data.total}</div>
-//                         <div class="label">สาขาทั้งหมด</div>
-//                     </div>
-//                     <div class="data-item">
-//                         <div class="value online">${data.online}</div>
-//                         <div class="label online">Online</div>
-//                     </div>
-//                     <div class="data-item">
-//                         <div class="value offline">${data.offline}</div>
-//                         <div class="label offline">Offline</div>
-//                     </div>
-//                     <div class="data-item">
-//                         <div class="value rate">${rate}%</div>
-//                         <div class="label rate">Rate</div>
-//                     </div>  
-//                 </div>
-//             </div>
-//         `;
-//     });
-//     DOMElements.regionSummaryContainer.innerHTML = summaryHtml;
-// }
-
-// // ฟังก์ชันสำหรับอัปเดตกราฟจังหวัดและ Summary Cards (summary เท่านั้น)
-// function updateProvinceChartAndSummary() {
-//     const source = (filteredBranches && filteredBranches.length) ? filteredBranches : allBranches;
-//     if (!DOMElements.provinceSummaryContainer) return;
-
-//     const provinceData = {};
-//     source.forEach(branch => {
-//         const province = branch.province || 'ไม่ระบุ';
-//         if (!provinceData[province]) provinceData[province] = { total: 0, online: 0, offline: 0 };
-//         provinceData[province].total++;
-//         if (branch.onlineStatus === 'สามารถเชื่อม Online') provinceData[province].online++;
-//         else provinceData[province].offline++;
-//     });
-
-//     let summaryHtml = '';
-//     const sortedProvinces = Object.keys(provinceData).sort();
-//     sortedProvinces.forEach(province => {
-//         const data = provinceData[province];
-//         const rate = data.total > 0 ? ((data.online / data.total) * 100).toFixed(1) : 0;
-//         summaryHtml += `
-//             <div class="summary-card">
-//                 <div class="summary-type"><span class="badge">📍</span> ${province}</div>
-//                 <div class="summary-data">
-//                     <div class="data-item">
-//                         <div class="value">${data.total}</div>
-//                         <div class="label">สาขาทั้งหมด</div>
-//                     </div>
-//                     <div class="data-item">
-//                         <div class="value online">${data.online}</div>
-//                         <div class="label online">Online</div>
-//                     </div>
-//                     <div class="data-item">
-//                         <div class="value offline">${data.offline}</div>
-//                         <div class="label offline">Offline</div>
-//                     </div>
-//                     <div class="data-item">
-//                         <div class="value rate">${rate}%</div>
-//                         <div class="label rate">Rate</div>
-//                     </div>  
-//                 </div>
-//             </div>
-//         `;
-//     });
-//     DOMElements.provinceSummaryContainer.innerHTML = summaryHtml;
-// }
 
 // ฟังก์ชันจัดการการเรียงลำดับกราฟ
 function handleChartSort(chartType, sortValue, isFullView = false) {
@@ -619,3 +511,17 @@ function updateRecorderFilter() {
     }
 }
 
+// ฟังก์ชันสำหรับดึงรายการจังหวัดทั้งหมดที่ไม่ซ้ำกัน
+function getUniqueProvinces() {
+    const provinces = [...new Set(allBranches.map(b => b.province).filter(p => p))];
+    // เรียงลำดับจังหวัดตามตัวอักษร
+    provinces.sort((a, b) => a.localeCompare(b, 'th-TH'));
+    return provinces;
+}
+
+// ฟังก์ชันสำหรับสร้างและอัปเดต dropdown ของจังหวัด
+function updateProvinceDropdown(selectElement) {
+    const provinces = getUniqueProvinces();
+    selectElement.innerHTML = '<option value="">เลือกจังหวัด</option>' + 
+        provinces.map(p => `<option value="${p}">${p}</option>`).join('');
+}
