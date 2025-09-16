@@ -1,0 +1,172 @@
+// assets/scripts/events.js
+
+// REFACTORED: รวมการตั้งค่า Event Listener ไว้ในฟังก์ชันเดียว
+function setupEventListeners() {
+    // Filters
+    DOMElements.searchInput.addEventListener('keyup', debounce(applyFilters, 300));
+    DOMElements.provinceFilter.addEventListener('change', applyFilters);
+    DOMElements.statusFilter.addEventListener('change', applyFilters);
+    DOMElements.regionFilter.addEventListener('change', applyFilters);
+    DOMElements.branchStatusFilter.addEventListener('change', applyFilters);
+    DOMElements.recorderFilter.addEventListener('change', applyFilters);
+
+    // Buttons
+    DOMElements.addBranchBtn.addEventListener('click', openAddModal);
+    DOMElements.exportExcelBtn.addEventListener('click', () => openExportModal('excel'));
+    DOMElements.exportCsvBtn.addEventListener('click', () => openExportModal('csv'));
+    DOMElements.exportPdfBtn.addEventListener('click', () => openExportModal('pdf'));
+    DOMElements.clearDataBtn.addEventListener('click', confirmClearAllData);
+    DOMElements.historyBtn.addEventListener('click', openHistoryModal);
+    DOMElements.closeHistoryModalBtn.addEventListener('click', closeHistoryModal);
+    DOMElements.fileInput.addEventListener('change', handleFileUpload);
+
+    // Event Listeners สำหรับการสลับ Tab ในส่วนกราฟ
+    DOMElements.tabStatusBtn.addEventListener('click', () => showChartTab('status'));
+    DOMElements.tabRegionBtn.addEventListener('click', () => showChartTab('region'));
+    DOMElements.tabProvinceBtn.addEventListener('click', () => showChartTab('province'));
+    
+    // Event Listeners สำหรับปุ่ม "ดูข้อมูลทั้งหมด" ใน Tab 'ภาค' และ 'จังหวัด'
+    DOMElements.viewAllRegionBtn.addEventListener('click', () => {
+        openFullChartModal('region');
+        // เรียก resize หลังจากเปิด modal openFullChartModal มีการสร้าง instance ของ fullChart
+        setTimeout(() => {
+            if (window.fullChart) {
+                window.fullChart.resize();
+            }
+        }, 100);
+    });
+    DOMElements.viewAllProvinceBtn.addEventListener('click', () => {
+        openFullChartModal('province');
+        // เรียก resize หลังจากเปิด modal openFullChartModal มีการสร้าง instance ของ fullChart
+        setTimeout(() => {
+            if (window.fullChart) {
+                window.fullChart.resize();
+            }
+        }, 100);
+    });
+
+    // Event Listeners สำหรับการเลือกเรียงข้อมูลใน Tab 'ภาค' และ 'จังหวัด'
+    DOMElements.regionChartSortSelect.addEventListener('change', (event) => {
+        handleChartSort('region', event.target.value);
+    });
+    DOMElements.provinceChartSortSelect.addEventListener('change', (event) => {
+        handleChartSort('province', event.target.value);
+    });
+
+    // Event Listener สำหรับการเลือกเรียงข้อมูลใน Modal ของ Full view
+    DOMElements.fullChartSortSelect.addEventListener('change', (event) => {
+        const chartType = DOMElements.fullChartModal.dataset.chartType; // ต้องเพิ่ม dataset.chartType ใน modal ก่อน
+        handleChartSort(chartType, event.target.value, true); // true คือเรียกใช้จาก modal
+        //เรียก resize ทุกครั้งที่มีการเปลี่ยนข้อมูล
+        if (window.fullChart) {
+            window.fullChart.resize();
+        }
+    });
+
+    // Event Listener สำหรับปิด Modal Full view
+    DOMElements.closeFullChartModalBtn.addEventListener('click', closeFullChartModal);
+
+    // Pagination
+    DOMElements.pageSizeSelect.addEventListener('change', changePageSize);
+    DOMElements.firstPageBtn.addEventListener('click', () => goToPage(1));
+    DOMElements.prevPageBtn.addEventListener('click', goToPreviousPage);
+    DOMElements.nextPageBtn.addEventListener('click', goToNextPage);
+    DOMElements.lastPageBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(filteredBranches.length / pageSize);
+        goToPage(totalPages);
+    });
+
+    // Modal
+    DOMElements.branchForm.addEventListener('submit', saveBranch);
+    DOMElements.closeModalBtn.addEventListener('click', closeModal);
+    DOMElements.cancelModalBtn.addEventListener('click', closeModal);
+    window.addEventListener('click', (event) => {
+        if (event.target === DOMElements.modal) closeModal();
+        if (event.target === DOMElements.detailsModal) closeDetailsModal();
+        if (event.target === DOMElements.exportModal) closeExportModal();
+        if (event.target === DOMElements.notificationModal) hideNotification();
+        if (event.target === DOMElements.historyModal) closeHistoryModal();
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeModal();
+            closeDetailsModal();
+            closeExportModal();
+            hideNotification();
+            closeHistoryModal();
+        }
+    });
+
+    // NEW: Event Listener สำหรับ Export Modal
+    DOMElements.closeExportModalBtn.addEventListener('click', closeExportModal);
+    DOMElements.cancelExportModalBtn.addEventListener('click', closeExportModal);
+
+    DOMElements.exportForm.addEventListener('submit', (event) => {
+        event.preventDefault(); // ป้องกันหน้าเว็บรีโหลด
+        const fileName = DOMElements.exportFileName.value.trim();
+
+        if (fileName) {
+            if (exportType === 'excel') {
+                exportExcel(fileName);
+            } else if (exportType === 'csv') {
+                exportCSV(fileName);
+            } else if (exportType === 'pdf') {
+                exportPDF(fileName);   // << ต้องมีบรรทัดนี้
+            }
+            closeExportModal();
+        } else {
+            showNotification({ type: 'error', title: 'ข้อมูลไม่ครบถ้วน', message: 'กรุณากรอกชื่อไฟล์ก่อนทำการส่งออก' });
+        }
+    });
+
+    // NEW: Event Listener สำหรับ Details Modal
+    DOMElements.closeDetailsModalBtn.addEventListener('click', closeDetailsModal);
+
+    DOMElements.detailsModalEditBtn.addEventListener('click', () => {
+        const branchId = parseInt(DOMElements.detailsModal.dataset.branchId);
+        if (branchId) {
+            closeDetailsModal(); // ปิด Modal รายละเอียดก่อน
+            editBranch(branchId); // แล้วเปิด Modal แก้ไข
+        }
+    });
+
+    DOMElements.detailsModalDeleteBtn.addEventListener('click', () => {
+        const branchId = parseInt(DOMElements.detailsModal.dataset.branchId);
+        if (branchId) {
+            closeDetailsModal();
+            confirmDeleteBranch(branchId);
+        }
+    });
+
+    // Event Delegation สำหรับปุ่ม "จัดการ" ในตาราง
+    // วิธีนี้ทำให้เราไม่ต้องผูก Event ให้ทุกปุ่ม แต่ดักฟังที่ตัวแม่ (tbody) ทีเดียว
+    DOMElements.branchTableBody.addEventListener('click', (event) => {
+        const btn = event.target.closest('.btn-manage');
+        if (!btn) return;
+        const idAttr = btn.dataset.id;
+        if (!idAttr) {
+            showNotification({ type: 'error', title: 'ผิดพลาด', message: 'ID ไม่ถูกต้อง' });
+            return;
+        }
+        openDetailsModal(Number(idAttr));
+    });
+
+    // Event Listener สำหรับการคลิกหัวตารางเพื่อเรียงข้อมูล
+    DOMElements.tableHeader.addEventListener('click', (event) => {
+        const header = event.target.closest('.table-sortable');
+        if (!header) return;
+
+        const newSortColumn = header.dataset.column;
+
+        if (sortColumn === newSortColumn) {
+            // ถ้าคลิกคอลัมน์เดิม ให้สลับทิศทาง
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            // ถ้าคลิกคอลัมน์ใหม่ ให้เริ่มเรียงจากน้อยไปมาก
+            sortColumn = newSortColumn;
+            sortDirection = 'asc';
+        }
+
+        applyFilters(); // สั่งให้กรองและเรียงข้อมูลใหม่ทั้งหมด
+    });
+}
