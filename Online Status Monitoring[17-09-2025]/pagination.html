@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .pagination-container{
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            border-top: 3px solid #0ea5e9;
+        }
+
+        .pagination-info{
+            color: #64748b;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .pagination-controls{
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-controls button{
+            min-width: auto;
+            padding: 8px 16px;
+            font-size: 13px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        }
+
+        .pagination-controls button:hover{
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.4);
+        }
+
+        .pagination-controls button:disabled{
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            background: #94a3b8;
+        }
+
+        .pagination-controls button:disabled:hover{
+            transform: none;
+            box-shadow: none;
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="pagination-container" id="paginationContainer" style="display: none;">
+        <div class="pagination-info">
+            <span id="paginationInfo">แสดง 0 - 0 จาก 0 รายการ</span>
+        </div>
+        <div class="pagination-controls">
+            <div class="page-size-selector">
+                <label>แสดงต่อหน้า:</label>
+                <select id="pageSizeSelect">
+                    <option value="50">50</option>
+                    <option value="100" selected>100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                </select>
+            </div>
+            <button id="firstPageBtn">⏮️ หน้าแรก</button>
+            <button id="prevPageBtn">◀️ ก่อนหน้า</button>
+            <span id="currentPageInfo">หน้า 1 จาก 1</span>
+            <button id="nextPageBtn">▶️ ถัดไป</button>
+            <button id="lastPageBtn">⏭️ หน้าสุดท้าย</button>
+        </div>
+    </div>
+</body>
+</html>
